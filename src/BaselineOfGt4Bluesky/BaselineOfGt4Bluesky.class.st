@@ -22,7 +22,10 @@ BaselineOfGt4Bluesky class >> loadLepiter [
 { #category : #baseline }
 BaselineOfGt4Bluesky >> baseline: spec [
 	<baseline>
-		^ spec for: #common do: [
-			spec package: 'Gt4Bluesky'
-		]
+	^ spec
+		for: #common
+		do: [ spec
+				baseline: 'Gt4AtProto'
+				with: [ spec repository: 'github://feenkcom/gt4atproto:main/src' ].
+			spec package: 'Gt4Bluesky' with: [ spec requires: {'Gt4AtProto'} ] ]
 ]
