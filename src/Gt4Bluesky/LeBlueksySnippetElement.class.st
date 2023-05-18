@@ -44,7 +44,7 @@ LeBlueksySnippetElement >> initializeContentElement [
 			hMatchParent.
 
 	inputElement := BrEditor new
-			aptitude: BrGlamorousEditorAptitude;
+			aptitude: BrGlamorousRegularEditorAptitude;
 			vExact:200.
 	inputElement visibility: BlVisibility visible.
 	inputElement
