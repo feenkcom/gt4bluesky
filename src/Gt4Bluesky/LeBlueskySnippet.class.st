@@ -2,10 +2,10 @@ Class {
 	#name : #LeBlueskySnippet,
 	#superclass : #LeTextualSnippet,
 	#instVars : [
-		'url',
 		'text',
 		'client',
-		'actor'
+		'actor',
+		'post'
 	],
 	#category : #'Gt4Bluesky-Snippet'
 }
@@ -29,7 +29,7 @@ LeBlueskySnippet class >> empty [
 LeBlueskySnippet class >> leJsonV3AttributeMapping [
 
 	^ super leJsonV3AttributeMapping
-		add: (#url -> #urlString);
+		add: (#post -> #postString);
 		add: (#text -> #textString);
 		yourself
 ]
@@ -43,7 +43,7 @@ LeBlueskySnippet class >> leJsonV3Name [
 LeBlueskySnippet class >> leJsonV4AttributeMapping [
 
 	^ super leJsonV4AttributeMapping
-		add: (#url -> #urlString);
+		add: (#post -> #postString);
 		add: (#text -> #textString);
 		yourself
 ]
@@ -89,11 +89,26 @@ LeBlueskySnippet >> contentAsString [
 ]
 
 { #category : #accessing }
+LeBlueskySnippet >> hasPost [
+	^ self post isNotNil
+]
+
+{ #category : #accessing }
 LeBlueskySnippet >> initialize [
 	super initialize.
-	url := ''.
 	text := ''.
 	client := GtApClient new
+]
+
+{ #category : #accessing }
+LeBlueskySnippet >> post [
+	^ post
+]
+
+{ #category : #accessing }
+LeBlueskySnippet >> post: anObject [
+	post := anObject.
+	self announce: LeBlueskySnippetPostChanged new
 ]
 
 { #category : #accessing }
@@ -104,14 +119,4 @@ LeBlueskySnippet >> text [
 { #category : #accessing }
 LeBlueskySnippet >> text: anObject [
 	text := anObject
-]
-
-{ #category : #accessing }
-LeBlueskySnippet >> url [
-	^ url
-]
-
-{ #category : #accessing }
-LeBlueskySnippet >> url: anObject [
-	url := anObject
 ]

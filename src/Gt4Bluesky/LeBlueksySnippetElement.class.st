@@ -7,10 +7,11 @@ Class {
 		'viewElement',
 		'toolbarElement',
 		'editUrlButton',
-		'cancelButton',
 		'errorLabelElement',
 		'identityElement',
-		'publishButton'
+		'publishButton',
+		'replyButton',
+		'deleteButton'
 	],
 	#category : #'Gt4Bluesky-Snippet'
 }
@@ -47,9 +48,6 @@ LeBlueksySnippetElement >> initializeContentElement [
 			aptitude: BrGlamorousRegularEditorAptitude;
 			vExact:200.
 	inputElement visibility: BlVisibility visible.
-	inputElement
-		when: BrTextEditorModifiedEvent
-		do: [ :anEvent | self onTextInputModified: anEvent ].
 
 	LeSnippetEditorElementShortcuter new
 		editor: inputElement;
@@ -83,15 +81,24 @@ LeBlueksySnippetElement >> initializeToolbarElement [
 
 	toolbarElement addItem: publishButton.
 
-	cancelButton := BrButton new
+	replyButton := BrButton new
+			beTinySize;
+			aptitude: BrGlamorousButtonWithLabelAptitude;
+			label: 'Reply';
+			visibility: BlVisibility gone;
+			action: [ :aButton | self onReplyAction: aButton ].
+
+	toolbarElement addItem: replyButton.
+	
+	deleteButton := BrButton new
 			beTinySize;
 			aptitude: BrGlamorousButtonWithIconAptitude;
 			icon: BrGlamorousVectorIcons cancel;
-			label: 'Cancel changes';
+			label: 'Delete';
 			visibility: BlVisibility gone;
-			action: [ :aButton | self onCancelAction: aButton ].
+			action: [ :aButton | self onDeleteAction: aButton ].
 
-	toolbarElement addItem: cancelButton.
+	toolbarElement addItem: deleteButton.
 
 	errorLabelElement := BrLabel new
 			id: LeGitHubErrorMessageElementId;
@@ -112,12 +119,13 @@ LeBlueksySnippetElement >> initializeToolbarElement [
 							handle: [ BrButton new
 									label: 'Login';
 									aptitude: BrGlamorousButtonWithLabelAptitude - BrGlamorousButtonExteriorAptitude ]
-							content: [ (GtBlueskyLoginForm new
-									clientCallback: [ :aClient | 
+							content: [ LeBlueksyAccountSwitcherElement new
+									currentlySelected: self snippet client;
+									onSelection: [ :aClient | 
 										self snippet client: aClient.
+										LeBlueskyIdentityStore default addClient: aClient.
 										identityElement
-											inUIProcessDo: [ identityElement dispatchEvent: BrDropdownHideWish new ] ])
-									asElement padding: (BlInsets all: 8) ]).
+											inUIProcessDo: [ identityElement dispatchEvent: BrDropdownHideWish new ] ] ]).
 
 	toolbarElement addItem: identityElement
 ]
@@ -134,9 +142,31 @@ LeBlueksySnippetElement >> inputElement: anObject [
 
 { #category : #accessing }
 LeBlueksySnippetElement >> onClientChanged [
-	self snippet client isLoggedIn
+	(self snippet client isNotNil and: [ self snippet client isLoggedIn ])
 		ifTrue: [ identityElement label: self snippet client handle.
 			publishButton enable ]
+]
+
+{ #category : #accessing }
+LeBlueksySnippetElement >> onDeleteAction: aButton [
+	self snippet client
+		comAtprotoRepoDeleteRecordRepo: self snippet actor atpDid
+		collection: AppBskyFeedPostMain atpRecordName
+		rkey: (#/ split: (self snippet post at: 'uri')) last
+		swapRecord: nil
+		swapCommit: nil.
+	self snippet post: nil
+]
+
+{ #category : #accessing }
+LeBlueksySnippetElement >> onPostChanged [
+	self snippet hasPost
+		ifTrue: [ publishButton visibility: BlVisibility gone.
+			replyButton visibility: BlVisibility visible.
+			deleteButton visibility: BlVisibility visible ]
+		ifFalse: [ publishButton visibility: BlVisibility visible.
+			replyButton visibility: BlVisibility gone.
+			deleteButton visibility: BlVisibility gone ]
 ]
 
 { #category : #accessing }
@@ -148,25 +178,34 @@ LeBlueksySnippetElement >> onPublishAction: aButton [
 			'text' -> inputElement text asString} asDictionary.
 	"self fileRecords ifNotEmpty: [ record at: 'embed' put: self filesToEmbed ]."
 
-	"self snippet hasPost
+	self snippet hasPost
 		ifTrue: [ | root |
-			root := self snippet post getRoot.
+			root := ((self snippet client
+					appBskyFeedGetPostThreadUri: (self snippet post at: 'uri')
+					depth: nil) at: 'thread') client: self snippet client.
 			record
 				at: 'reply'
-				put: {'parent'
-							-> {'uri' -> self snippet post atpPost atpUri.
-									'cid' -> self snippet post atpPost atpCid} asDictionary.
+				put: {'parent' -> self snippet post.
 						'root'
 							-> {'uri' -> root atpPost atpUri.
-									'cid' -> root atpPost atpCid} asDictionary} asDictionary ]."
+									'cid' -> root atpPost atpCid} asDictionary} asDictionary ].
 
-	self snippet client
+	self snippet
+		post: (self snippet client
 				comAtprotoRepoCreateRecordRepo: self snippet actor atpDid
 				collection: AppBskyFeedPostMain atpRecordName
 				rkey: nil
 				validate: nil
 				record: record
-				swapCommit: nil
+				swapCommit: nil)
+]
+
+{ #category : #accessing }
+LeBlueksySnippetElement >> onReplyAction: aButton [
+	self snippet
+		addSnippetAfterSelf: (LeBlueskySnippet empty
+				client: self snippet client;
+				post: self snippet post)
 ]
 
 { #category : #accessing }
@@ -203,6 +242,11 @@ LeBlueksySnippetElement >> subscribeToSnippetViewModel [
 	self snippetViewModel
 		when: LeBlueskySnippetClientChanged
 		send: #onClientChanged
+		to: self.
+		
+	self snippetViewModel
+		when: LeBlueskySnippetPostChanged
+		send: #onPostChanged
 		to: self
 ]
 
