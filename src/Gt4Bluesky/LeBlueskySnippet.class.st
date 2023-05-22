@@ -70,6 +70,14 @@ LeBlueskySnippet >> asSnippetViewModel [
 ]
 
 { #category : #accessing }
+LeBlueskySnippet >> atpPost [
+	self hasPost ifFalse: [ ^ nil ].
+
+	^ (self client appBskyFeedGetPostThreadUri: (self post at: 'uri') depth: nil)
+		at: 'thread'
+]
+
+{ #category : #accessing }
 LeBlueskySnippet >> client [
 	^ client
 ]

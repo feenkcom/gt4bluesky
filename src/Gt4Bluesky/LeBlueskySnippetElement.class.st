@@ -1,5 +1,5 @@
 Class {
-	#name : #LeBlueksySnippetElement,
+	#name : #LeBlueskySnippetElement,
 	#superclass : #LeTextualSnippetElement,
 	#instVars : [
 		'contentElement',
@@ -11,27 +11,39 @@ Class {
 		'identityElement',
 		'publishButton',
 		'replyButton',
-		'deleteButton'
+		'deleteButton',
+		'headerElement',
+		'authorNameLabel',
+		'authorHandleLabel',
+		'dateLabel'
 	],
 	#category : #'Gt4Bluesky-Snippet'
 }
 
 { #category : #accessing }
-LeBlueksySnippetElement >> contentElement [
+LeBlueskySnippetElement >> buildGrayLabel [
+	^ BrLabel new
+		aptitude: (BrGlamorousLabelAptitude new
+			foreground:  Color lightGray)
+]
+
+{ #category : #accessing }
+LeBlueskySnippetElement >> contentElement [
 	<return: #BrFrame>
 	^ contentElement
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> editor [
+LeBlueskySnippetElement >> editor [
 	"Required by ${method:LeTextualSnippetElement>>#registerFocusEventHandlers}$"
 	^ self inputElement
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> initialize [
+LeBlueskySnippetElement >> initialize [
 	super initialize.
 
+	self initializeHeader.
 	self initializeContentElement.
 	self initializeToolbarElement.
 	
@@ -39,7 +51,7 @@ LeBlueksySnippetElement >> initialize [
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> initializeContentElement [
+LeBlueskySnippetElement >> initializeContentElement [
 	contentElement := BrFrame new
 			vFitContent;
 			hMatchParent.
@@ -65,7 +77,26 @@ LeBlueksySnippetElement >> initializeContentElement [
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> initializeToolbarElement [
+LeBlueskySnippetElement >> initializeHeader [
+	headerElement := BrHorizontalPane new
+			hMatchParent;
+			vFitContent;
+			visibility: BlVisibility gone;
+			margin: (BlInsets left: 3).
+
+	headerElement
+		addChild: (authorNameLabel := BrLabel new aptitude: BrGlamorousLabelAptitude new);
+		addChild: (authorHandleLabel := self buildGrayLabel);
+		addChild: (dateLabel := self buildGrayLabel);
+		addChild: (BrLabel new
+				aptitude: BrGlamorousLabelAptitude new;
+				text: 'wrote').
+
+	self addChild: headerElement
+]
+
+{ #category : #accessing }
+LeBlueskySnippetElement >> initializeToolbarElement [
 	toolbarElement := BrToolbar new
 			aptitude: BrGlamorousToolbarAptitude;
 			hMatchParent;
@@ -131,24 +162,24 @@ LeBlueksySnippetElement >> initializeToolbarElement [
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> inputElement [
+LeBlueskySnippetElement >> inputElement [
 	^ inputElement
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> inputElement: anObject [
+LeBlueskySnippetElement >> inputElement: anObject [
 	inputElement := anObject
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> onClientChanged [
+LeBlueskySnippetElement >> onClientChanged [
 	(self snippet client isNotNil and: [ self snippet client isLoggedIn ])
 		ifTrue: [ identityElement label: self snippet client handle.
 			publishButton enable ]
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> onDeleteAction: aButton [
+LeBlueskySnippetElement >> onDeleteAction: aButton [
 	self snippet client
 		comAtprotoRepoDeleteRecordRepo: self snippet actor atpDid
 		collection: AppBskyFeedPostMain atpRecordName
@@ -159,18 +190,23 @@ LeBlueksySnippetElement >> onDeleteAction: aButton [
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> onPostChanged [
+LeBlueskySnippetElement >> onPostChanged [
 	self snippet hasPost
 		ifTrue: [ publishButton visibility: BlVisibility gone.
 			replyButton visibility: BlVisibility visible.
-			deleteButton visibility: BlVisibility visible ]
+			deleteButton visibility: BlVisibility visible.
+			inputElement beReadOnlyWithSelection.
+			headerElement visibility: BlVisibility visible.
+			self updateHeader ]
 		ifFalse: [ publishButton visibility: BlVisibility visible.
 			replyButton visibility: BlVisibility gone.
-			deleteButton visibility: BlVisibility gone ]
+			deleteButton visibility: BlVisibility gone.
+			inputElement beEditable.
+			headerElement visibility: BlVisibility gone ]
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> onPublishAction: aButton [
+LeBlueskySnippetElement >> onPublishAction: aButton [
 	| record |
 	"self uploadFiles."
 	record := {'$type' -> AppBskyFeedPostMain atpRecordName.
@@ -201,7 +237,7 @@ LeBlueksySnippetElement >> onPublishAction: aButton [
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> onReplyAction: aButton [
+LeBlueskySnippetElement >> onReplyAction: aButton [
 	self snippet
 		addSnippetAfterSelf: (LeBlueskySnippet empty
 				client: self snippet client;
@@ -209,13 +245,13 @@ LeBlueksySnippetElement >> onReplyAction: aButton [
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> onSnippetViewModelChanged [
+LeBlueskySnippetElement >> onSnippetViewModelChanged [
 	super onSnippetViewModelChanged.
 	self onClientChanged
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> snippetContent [
+LeBlueskySnippetElement >> snippetContent [
 	"Return an element that represents a content of the snippet.
 	The embedder is responsible for placing #snippetContent in the right place within snippet element depending on the
 	View Model properties and derived look"
@@ -225,7 +261,7 @@ LeBlueksySnippetElement >> snippetContent [
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> snippetToolbar [
+LeBlueskySnippetElement >> snippetToolbar [
 	"Return an element that represents a toolbar of the snippet. A toolbar usually appears below the snippet content.
 	The embedder is responsible for placing #snippetToolbar in the right place within snippet element depending on the
 	View Model properties and derived look.
@@ -236,7 +272,7 @@ LeBlueksySnippetElement >> snippetToolbar [
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> subscribeToSnippetViewModel [
+LeBlueskySnippetElement >> subscribeToSnippetViewModel [
 	super subscribeToSnippetViewModel.
 
 	self snippetViewModel
@@ -251,7 +287,22 @@ LeBlueksySnippetElement >> subscribeToSnippetViewModel [
 ]
 
 { #category : #accessing }
-LeBlueksySnippetElement >> toolbarElement [
+LeBlueskySnippetElement >> toolbarElement [
 	<return: #BrToolbar>
 	^ toolbarElement
+]
+
+{ #category : #accessing }
+LeBlueskySnippetElement >> updateHeader [
+	| post |
+	self snippet hasPost
+		ifTrue: [ post := self snippet atpPost.
+			post author
+				ifNil: [ authorNameLabel text: '<missing>'.
+					authorHandleLabel text: ''.
+					^ self ].
+
+			authorNameLabel text: (post author atpDisplayName ifNil: [ '' ]).
+			authorHandleLabel text: '@' , post author atpHandle.
+			dateLabel text: ' at ' , post createdAtTimestamp printToMinute ]
 ]

@@ -16,7 +16,7 @@ LeBlueskySnippetViewModel >> onSnippetPostChanged: anObject [
 
 { #category : #accessing }
 LeBlueskySnippetViewModel >> snippetElementClass [
-	^ LeBlueksySnippetElement
+	^ LeBlueskySnippetElement
 ]
 
 { #category : #accessing }
