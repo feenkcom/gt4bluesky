@@ -46,7 +46,7 @@ LeBlueskySnippetElement >> contentElement [
 
 { #category : #accessing }
 LeBlueskySnippetElement >> createAddFileButton [
-	^ addFileButton := BrButton new beSmallSize
+	^ addFileButton := BrButton new beTinySize
 			aptitude: BrGlamorousButtonWithIconAptitude new
 					+ (BrGlamorousWithDropdownAptitude
 							handle: [ BrButton new
@@ -66,7 +66,7 @@ LeBlueskySnippetElement >> createAddFileButton [
 										self files add: aFile.
 										addFileButton
 											inUIProcessDo: [ addFileButton dispatchEvent: BrDropdownHideWish new.
-										self updateFileContainer ] ] ]);
+												self updateFileContainer ] ] ]);
 			icon: BrGlamorousVectorIcons add;
 			label: 'Add File'
 ]
@@ -171,10 +171,7 @@ LeBlueskySnippetElement >> initializeHeader [
 		addChild: (profilePicture := GtApFeedUserPictureElement new exact: 12 @ 12);
 		addChild: (authorNameLabel := BrLabel new aptitude: BrGlamorousLabelAptitude new);
 		addChild: (authorHandleLabel := self buildGrayLabel);
-		addChild: (dateLabel := self buildGrayLabel);
-		addChild: (BrLabel new
-				aptitude: BrGlamorousLabelAptitude new;
-				text: 'wrote').
+		addChild: (dateLabel := self buildGrayLabel).
 
 
 	parentInfoElement := BrHorizontalPane new
@@ -345,7 +342,7 @@ LeBlueskySnippetElement >> onReplyAction: aButton [
 		addSnippetAfterSelf: (LeBlueskySnippet empty
 				client: self snippet client;
 				parentPost: self snippet post).
-	self snippet focusNextSnippet
+	self snippetViewModel focusNextSnippet
 ]
 
 { #category : #accessing }
