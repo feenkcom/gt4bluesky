@@ -5,7 +5,8 @@ Class {
 		'text',
 		'client',
 		'actor',
-		'post'
+		'post',
+		'parentPost'
 	],
 	#category : #'Gt4Bluesky-Snippet'
 }
@@ -70,6 +71,14 @@ LeBlueskySnippet >> asSnippetViewModel [
 ]
 
 { #category : #accessing }
+LeBlueskySnippet >> atpParent [
+	self hasParentPost ifFalse: [ ^ nil ].
+
+	^ (self client appBskyFeedGetPostThreadUri: (self parentPost at: 'uri') depth: nil)
+		at: 'thread'
+]
+
+{ #category : #accessing }
 LeBlueskySnippet >> atpPost [
 	self hasPost ifFalse: [ ^ nil ].
 
@@ -97,6 +106,11 @@ LeBlueskySnippet >> contentAsString [
 ]
 
 { #category : #accessing }
+LeBlueskySnippet >> hasParentPost [
+	^ self parentPost isNotNil
+]
+
+{ #category : #accessing }
 LeBlueskySnippet >> hasPost [
 	^ self post isNotNil
 ]
@@ -106,6 +120,17 @@ LeBlueskySnippet >> initialize [
 	super initialize.
 	text := ''.
 	client := GtApClient new
+]
+
+{ #category : #accessing }
+LeBlueskySnippet >> parentPost [
+	^ parentPost
+]
+
+{ #category : #accessing }
+LeBlueskySnippet >> parentPost: anObject [
+	parentPost := anObject.
+	self announce: LeBlueskySnippetPostChanged new
 ]
 
 { #category : #accessing }
