@@ -30,28 +30,30 @@ LeBlueskySnippet class >> empty [
 LeBlueskySnippet class >> leJsonV3AttributeMapping [
 
 	^ super leJsonV3AttributeMapping
-		add: (#post -> #postString);
+		add: (#post -> #postDict);
+		add: (#parentPost -> #parentPostDict);
 		add: (#text -> #textString);
 		yourself
 ]
 
 { #category : #accessing }
 LeBlueskySnippet class >> leJsonV3Name [
-	^ 'blueskySnippet'
+	^ 'blueskyPostSnippet'
 ]
 
 { #category : #accessing }
 LeBlueskySnippet class >> leJsonV4AttributeMapping [
 
 	^ super leJsonV4AttributeMapping
-		add: (#post -> #postString);
+		add: (#post -> #postDict);
+		add: (#parentPost -> #parentPostDict);
 		add: (#text -> #textString);
 		yourself
 ]
 
 { #category : #accessing }
 LeBlueskySnippet class >> leJsonV4Name [
-	^ 'blueskySnippet'
+	^ 'blueskyPostSnippet'
 ]
 
 { #category : #accessing }

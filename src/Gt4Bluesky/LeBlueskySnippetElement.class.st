@@ -25,7 +25,6 @@ Class {
 		'parentAuthorNameLabel',
 		'parentAuthorHandleLabel',
 		'parentDateLabel',
-		'postInfoElement',
 		'parentInfoElement'
 	],
 	#category : #'Gt4Bluesky-Snippet'
@@ -156,39 +155,21 @@ LeBlueskySnippetElement >> initializeContentElement [
 
 { #category : #accessing }
 LeBlueskySnippetElement >> initializeHeader [
-	headerElement := BrVerticalPane new
-			hMatchParent;
-			vFitContent.
-
-	postInfoElement := BrHorizontalPane new
+	headerElement := BrHorizontalPane new
 			hMatchParent;
 			vFitContent;
-			visibility: BlVisibility gone.
+			padding: (BlInsets all: 3).
 
-	headerElement addChild: postInfoElement.
-
-	postInfoElement
-		addChild: (profilePicture := GtApFeedUserPictureElement new exact: 12 @ 12);
-		addChild: (authorNameLabel := BrLabel new aptitude: BrGlamorousLabelAptitude new);
-		addChild: (authorHandleLabel := self buildGrayLabel);
-		addChild: (dateLabel := self buildGrayLabel).
-
-
-	parentInfoElement := BrHorizontalPane new
-			hMatchParent;
-			vFitContent;
-			visibility: BlVisibility gone.
-
-	headerElement addChild: parentInfoElement.
-
-	parentInfoElement
-		addChild: (BrLabel new
-				aptitude: BrGlamorousLabelAptitude new;
-				text: 'Replying to ');
-		addChild: (parentProfilePicture := GtApFeedUserPictureElement new exact: 12 @ 12);
-		addChild: (parentAuthorNameLabel := BrLabel new aptitude: BrGlamorousLabelAptitude new);
-		addChild: (parentAuthorHandleLabel := self buildGrayLabel);
-		addChild: (parentDateLabel := self buildGrayLabel).
+	headerElement
+		addChild: (profilePicture := GtApFeedUserPictureElement new visibility: BlVisibility gone);
+		addChild: (authorNameLabel := BrLabel new
+					aptitude: BrGlamorousLabelAptitude new;
+					visibility: BlVisibility gone);
+		addChild: (authorHandleLabel := self buildGrayLabel visibility: BlVisibility gone);
+		addChild: (dateLabel := self buildGrayLabel visibility: BlVisibility gone);
+		addChild: BrFrame new matchParent;
+		addChild: (parentInfoElement := BrGlamorousIcons spawn asElement
+					visibility: BlVisibility gone).
 
 	^ headerElement
 ]
@@ -209,7 +190,7 @@ LeBlueskySnippetElement >> initializeToolbarElement [
 			action: [ :aButton | self onPublishAction: aButton ].
 
 	toolbarElement addItem: publishButton.
-	
+
 	toolbarElement addItem: self createAddFileButton.
 
 	replyButton := BrButton new
@@ -220,7 +201,7 @@ LeBlueskySnippetElement >> initializeToolbarElement [
 			action: [ :aButton | self onReplyAction: aButton ].
 
 	toolbarElement addItem: replyButton.
-	
+
 	deleteButton := BrButton new
 			beTinySize;
 			aptitude: BrGlamorousButtonWithIconAptitude;
@@ -246,6 +227,7 @@ LeBlueskySnippetElement >> initializeToolbarElement [
 	identityElement := BrButton new
 			label: 'Not logged in';
 			aptitude: BrGlamorousButtonWithLabelAptitude
+					+ (BrGlamorousButtonExteriorAptitude new borderPaint: Color transparent)
 					+ (BrGlamorousWithDropdownAptitude
 							handle: [ BrButton new
 									label: 'Login';
@@ -292,6 +274,7 @@ LeBlueskySnippetElement >> onDeleteAction: aButton [
 { #category : #accessing }
 LeBlueskySnippetElement >> onPostChanged [
 	self updateHeader.
+	
 	self snippet hasPost
 		ifTrue: [ publishButton visibility: BlVisibility gone.
 			addFileButton visibility: BlVisibility gone.
@@ -333,7 +316,9 @@ LeBlueskySnippetElement >> onPublishAction: aButton [
 				rkey: nil
 				validate: nil
 				record: record
-				swapCommit: nil)
+				swapCommit: nil).
+				
+	self transformLaterSnippetsFrom: self snippet
 ]
 
 { #category : #accessing }
@@ -395,6 +380,16 @@ LeBlueskySnippetElement >> toolbarElement [
 ]
 
 { #category : #accessing }
+LeBlueskySnippetElement >> transformLaterSnippetsFrom: aSnippet [
+	aSnippet
+		nextSnippetDo: [ :nextSnippet | 
+			(nextSnippet isKindOf: LeBlueskySnippet)
+				ifTrue: [ nextSnippet parentPost: self snippet post ].
+			self transformLaterSnippetsFrom: nextSnippet ]
+		ifNone: [  ]
+]
+
+{ #category : #accessing }
 LeBlueskySnippetElement >> updateFileContainer [
 	imageContainer removeChildren.
 	imageContainer visibility: BlVisibility visible.
@@ -411,30 +406,29 @@ LeBlueskySnippetElement >> updateFileContainer [
 LeBlueskySnippetElement >> updateHeader [
 	| post |
 	self snippet hasPost
-		ifTrue: [ postInfoElement visibility: BlVisibility visible.
-			post := self snippet atpPost.
+		ifTrue: [ post := self snippet atpPost.
 			post author
 				ifNil: [ authorNameLabel text: '<missing>'.
-					authorHandleLabel text: ''.
-					^ self ].
+					authorNameLabel visibility: BlVisibility visible ]
+				ifNotNil: [ post author atpAvatar
+						ifNotNil: [ profilePicture user: post author.
+							profilePicture visibility: BlVisibility visible ].
 
-			profilePicture user: post author.
-			authorNameLabel text: (post author atpDisplayName ifNil: [ '' ]).
-			authorHandleLabel text: '@' , post author atpHandle.
-			dateLabel text: ' at ' , post createdAtTimestamp printToMinute ]
-		ifFalse: [ postInfoElement visibility: BlVisibility gone ].
+					post author atpDisplayName
+						ifNotNil: [ authorNameLabel text: post author atpDisplayName.
+							authorNameLabel visibility: BlVisibility visible ].
+
+					authorHandleLabel text: '@' , post author atpHandle.
+					authorHandleLabel visibility: BlVisibility visible.
+					dateLabel text: ' at ' , post createdAtTimestamp printToMinute.
+					dateLabel visibility: BlVisibility visible ] ]
+		ifFalse: [ authorNameLabel visibility: BlVisibility gone.
+			authorHandleLabel visibility: BlVisibility gone.
+			dateLabel visibility: BlVisibility gone.
+			profilePicture visibility: BlVisibility gone ].
+
 	self snippet hasParentPost
-		ifTrue: [ parentInfoElement visibility: BlVisibility visible.
-			post := self snippet atpParent.
-			post author
-				ifNil: [ parentAuthorNameLabel text: '<missing>'.
-					parentAuthorHandleLabel text: ''.
-					^ self ].
-
-			parentProfilePicture user: post author.
-			parentAuthorNameLabel text: (post author atpDisplayName ifNil: [ '' ]).
-			parentAuthorHandleLabel text: '@' , post author atpHandle.
-			parentDateLabel text: ' at ' , post createdAtTimestamp printToMinute ]
+		ifTrue: [ parentInfoElement visibility: BlVisibility visible ]
 		ifFalse: [ parentInfoElement visibility: BlVisibility gone ]
 ]
 

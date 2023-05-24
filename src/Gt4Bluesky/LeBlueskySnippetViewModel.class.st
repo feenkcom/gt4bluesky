@@ -5,6 +5,10 @@ Class {
 }
 
 { #category : #accessing }
+LeBlueskySnippetViewModel >> moveCursorAt: aCursorPosition [
+]
+
+{ #category : #accessing }
 LeBlueskySnippetViewModel >> onSnippetClientChanged: anObject [
 	self announce: anObject
 ]
