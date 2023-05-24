@@ -180,6 +180,7 @@ LeBlueskySnippetElement >> initializeParentDropdown [
 	^ parentInfoElement := BrButton new
 			icon: BrGlamorousIcons spawn;
 			visibility: BlVisibility gone;
+			label: 'Is Reply';
 			aptitude: BrGlamorousButtonWithIconAptitude
 					+ (BrGlamorousButtonExteriorAptitude new borderPaint: Color transparent)
 					+ (BrGlamorousWithDropdownAptitude
