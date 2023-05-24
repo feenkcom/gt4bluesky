@@ -23,6 +23,7 @@ LeBlueksyAccountSwitcherElement >> currentlySelected: aClient [
 LeBlueksyAccountSwitcherElement >> initialize [
 	super initialize.
 	self fitContent.
+	self padding: (BlInsets all: 5).
 
 	self initializeView
 ]

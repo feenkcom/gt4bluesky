@@ -74,18 +74,32 @@ LeBlueskySnippet >> asSnippetViewModel [
 
 { #category : #accessing }
 LeBlueskySnippet >> atpParent [
+	| response |
 	self hasParentPost ifFalse: [ ^ nil ].
+	response := self client
+			appBskyFeedGetPostThreadUri: (self parentPost at: 'uri')
+			depth: nil.
 
-	^ (self client appBskyFeedGetPostThreadUri: (self parentPost at: 'uri') depth: nil)
-		at: 'thread'
+	(response includesKey: 'error')
+		ifTrue: [ self parentPost: nil.
+			^ nil ].
+
+	^ response at: 'thread'
 ]
 
 { #category : #accessing }
 LeBlueskySnippet >> atpPost [
+	| response |
 	self hasPost ifFalse: [ ^ nil ].
+	response := self client
+			appBskyFeedGetPostThreadUri: (self post at: 'uri')
+			depth: nil.
 
-	^ (self client appBskyFeedGetPostThreadUri: (self post at: 'uri') depth: nil)
-		at: 'thread'
+	(response includesKey: 'error')
+		ifTrue: [ self post: nil.
+			^ nil ].
+
+	^ response at: 'thread'
 ]
 
 { #category : #accessing }

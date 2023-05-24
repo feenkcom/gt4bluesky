@@ -134,13 +134,15 @@ LeBlueskySnippetElement >> initializeContentElement [
 	contentElement := BrVerticalPane new
 			vFitContentLimited;
 			hMatchParent.
-			
+
 	contentElement addChild: self initializeHeader.
 
 	inputElement := BrEditor new
 			aptitude: BrGlamorousRegularEditorAptitude;
-			vExact:50.
-	inputElement visibility: BlVisibility visible.
+			vExact: 50.
+	inputElement
+		when: BrTextEditorModifiedEvent
+		do: [ :anEvent | self snippet text: inputElement text ].
 
 	LeSnippetEditorElementShortcuter new
 		editor: inputElement;
@@ -168,10 +170,24 @@ LeBlueskySnippetElement >> initializeHeader [
 		addChild: (authorHandleLabel := self buildGrayLabel visibility: BlVisibility gone);
 		addChild: (dateLabel := self buildGrayLabel visibility: BlVisibility gone);
 		addChild: BrFrame new matchParent;
-		addChild: (parentInfoElement := BrGlamorousIcons spawn asElement
-					visibility: BlVisibility gone).
+		addChild: self initializeParentDropdown.
 
 	^ headerElement
+]
+
+{ #category : #accessing }
+LeBlueskySnippetElement >> initializeParentDropdown [
+	^ parentInfoElement := BrButton new
+			icon: BrGlamorousIcons spawn;
+			visibility: BlVisibility gone;
+			aptitude: BrGlamorousButtonWithIconAptitude
+					+ (BrGlamorousButtonExteriorAptitude new borderPaint: Color transparent)
+					+ (BrGlamorousWithDropdownAptitude
+							handle: [ BrButton new
+									icon: BrGlamorousIcons spawn;
+									aptitude: BrGlamorousButtonWithIconAptitude - BrGlamorousButtonExteriorAptitude ]
+							content: [ GtApFeedPostSummaryElement new post: self snippet atpParent ])
+							beNotResizable
 ]
 
 { #category : #accessing }
@@ -334,7 +350,8 @@ LeBlueskySnippetElement >> onReplyAction: aButton [
 LeBlueskySnippetElement >> onSnippetViewModelChanged [
 	super onSnippetViewModelChanged.
 	self onClientChanged.
-	self onPostChanged
+	self onPostChanged.
+	inputElement text: self snippet text
 ]
 
 { #category : #accessing }
@@ -407,6 +424,8 @@ LeBlueskySnippetElement >> updateHeader [
 	| post |
 	self snippet hasPost
 		ifTrue: [ post := self snippet atpPost.
+			post ifNil: [ ^ self ].
+
 			post author
 				ifNil: [ authorNameLabel text: '<missing>'.
 					authorNameLabel visibility: BlVisibility visible ]
