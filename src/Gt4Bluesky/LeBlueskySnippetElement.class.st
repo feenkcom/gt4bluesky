@@ -125,6 +125,14 @@ LeBlueskySnippetElement >> initialize [
 
 	self initializeContentElement.
 
+	self
+		addAptitude: (BrLazyStyleCommonAptitude new
+				when: BlElementState focused | BlElementState hovered
+				style: [ :aStyle | 
+					aStyle
+						do: [ toolbarElement visibility: BlVisibility visible ]
+						after: [ toolbarElement visibility: BlVisibility hidden ] ]).
+
 	self padding: (BlInsets all: 5)
 ]
 
@@ -203,7 +211,8 @@ LeBlueskySnippetElement >> initializeToolbarElement [
 	toolbarElement := BrToolbar new
 			aptitude: BrGlamorousToolbarAptitude;
 			hMatchParent;
-			vFitContent.
+			vFitContent;
+			visibility: BlVisibility hidden.
 
 	toolbarContainer addChild: toolbarElement.
 
@@ -221,7 +230,8 @@ LeBlueskySnippetElement >> initializeToolbarElement [
 
 	replyButton := BrButton new
 			beTinySize;
-			aptitude: BrGlamorousButtonWithLabelAptitude;
+			aptitude: BrGlamorousButtonWithIconAptitude;
+			icon: BrGlamorousIcons spawn;
 			label: 'Reply';
 			visibility: BlVisibility gone;
 			action: [ :aButton | self onReplyAction: aButton ].
@@ -265,7 +275,7 @@ LeBlueskySnippetElement >> initializeToolbarElement [
 											inUIProcessDo: [ identityElement dispatchEvent: BrDropdownHideWish new ] ] ]).
 
 	toolbarContainer addChild: identityElement.
-	
+
 	^ toolbarContainer
 ]
 
