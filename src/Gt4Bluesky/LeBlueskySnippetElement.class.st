@@ -124,7 +124,6 @@ LeBlueskySnippetElement >> initialize [
 	fileRecords := OrderedCollection new.
 
 	self initializeContentElement.
-	self initializeToolbarElement.
 
 	self padding: (BlInsets all: 5)
 ]
@@ -140,9 +139,12 @@ LeBlueskySnippetElement >> initializeContentElement [
 	inputElement := BrEditor new
 			aptitude: BrGlamorousRegularEditorAptitude;
 			vExact: 50.
-	inputElement
+	inputElement editor
 		when: BrTextEditorModifiedEvent
 		do: [ :anEvent | self snippet text: inputElement text ].
+	inputElement
+		addEditorShortcut: (LeSnippetSplitSnippetShortcut new
+				combination: (self keyboardShortcut: #SplitSnippet)).
 
 	LeSnippetEditorElementShortcuter new
 		editor: inputElement;
@@ -152,7 +154,9 @@ LeBlueskySnippetElement >> initializeContentElement [
 
 	contentElement addChild: inputElement as: #editor.
 
-	contentElement addChild: self createImageContainer
+	contentElement addChild: self createImageContainer.
+
+	contentElement addChild: self initializeToolbarElement
 ]
 
 { #category : #accessing }
@@ -193,10 +197,15 @@ LeBlueskySnippetElement >> initializeParentDropdown [
 
 { #category : #accessing }
 LeBlueskySnippetElement >> initializeToolbarElement [
+	| toolbarContainer |
+	toolbarContainer := BrHorizontalPane new vFitContent hMatchParent.
+
 	toolbarElement := BrToolbar new
 			aptitude: BrGlamorousToolbarAptitude;
 			hMatchParent;
 			vFitContent.
+
+	toolbarContainer addChild: toolbarElement.
 
 	publishButton := BrButton new
 			beTinySize;
@@ -237,8 +246,6 @@ LeBlueskySnippetElement >> initializeToolbarElement [
 			vFitContent;
 			hMatchParent.
 
-
-
 	toolbarElement addItem: errorLabelElement.
 
 	identityElement := BrButton new
@@ -257,7 +264,9 @@ LeBlueskySnippetElement >> initializeToolbarElement [
 										identityElement
 											inUIProcessDo: [ identityElement dispatchEvent: BrDropdownHideWish new ] ] ]).
 
-	toolbarElement addItem: identityElement
+	toolbarContainer addChild: identityElement.
+	
+	^ toolbarContainer
 ]
 
 { #category : #accessing }
@@ -275,6 +284,15 @@ LeBlueskySnippetElement >> onClientChanged [
 	(self snippet client isNotNil and: [ self snippet client isLoggedIn ])
 		ifTrue: [ identityElement label: self snippet client handle.
 			publishButton enable ]
+]
+
+{ #category : #accessing }
+LeBlueskySnippetElement >> onCursorChanged [
+	inputElement
+		inUIProcessDo: [ inputElement navigator
+				removeAll;
+				addAll: self snippetViewModel cursor;
+				apply ]
 ]
 
 { #category : #accessing }
@@ -356,6 +374,11 @@ LeBlueskySnippetElement >> onSnippetViewModelChanged [
 ]
 
 { #category : #accessing }
+LeBlueskySnippetElement >> onTextChanged [
+	inputElement text: self snippet text
+]
+
+{ #category : #accessing }
 LeBlueskySnippetElement >> snippetContent [
 	"Return an element that represents a content of the snippet.
 	The embedder is responsible for placing #snippetContent in the right place within snippet element depending on the
@@ -373,7 +396,7 @@ LeBlueskySnippetElement >> snippetToolbar [
 	If returned #snippetToolbar is nil, no toolbar will be added"
 	<return: #BlElement or: nil>
 
-	^ self toolbarElement
+	^ nil
 ]
 
 { #category : #accessing }
@@ -384,10 +407,20 @@ LeBlueskySnippetElement >> subscribeToSnippetViewModel [
 		when: LeBlueskySnippetClientChanged
 		send: #onClientChanged
 		to: self.
-		
+
 	self snippetViewModel
 		when: LeBlueskySnippetPostChanged
 		send: #onPostChanged
+		to: self.
+
+	self snippetViewModel
+		when: LeBlueskySnippetTextChanged
+		send: #onTextChanged
+		to: self.
+
+	self snippetViewModel
+		when: LeBlueskySnippetCursorChanged
+		send: #onCursorChanged
 		to: self
 ]
 
